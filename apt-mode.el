@@ -4,7 +4,7 @@
 
 (defvar apt-mode-map
   (let ((map (make-sparse-keymap)))
-    ;; Define special keybindings here
+    (define-key map "\M-H" 'insert-apt-header)
     map)
   "Keymap for 'apt-mode'.")
 
@@ -21,5 +21,18 @@
   (set (make-local-variable 'comment-start) "~~ ")
   (set (make-local-variable 'comment-start-skip) "~~+\\s+"))
 
+(defun insert-apt-header ()
+  (interactive)
+  (beginning-of-buffer)
+  (let ((start (point)))
+    (insert "-----------------------\n\n")
+    (insert "-----------------------\n")
+    (insert "-----------------------\n")
+    (insert (format-time-string "%Y-%m-%d\n" (current-time)))
+    (insert "-----------------------\n\n")
+    (center-region start (point)))
+  (forward-line -6)
+  (indent-for-tab-command))
 
-(provide 'apt)
+
+(provide 'apt-mode)
