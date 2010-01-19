@@ -5,6 +5,8 @@
 (defvar apt-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\M-H" 'insert-apt-header)
+    (define-key map (kbd "*") 'apt-insert-asterisk)
+    (define-key map (kbd "RET") 'apt-insert-newline)
     map)
   "Keymap for 'apt-mode'.")
 
@@ -44,6 +46,26 @@
     (center-region start (point)))
   (forward-line -6)
   (indent-for-tab-command))
+
+(defun line-up-to-point ()
+  (buffer-substring
+   (line-beginning-position)
+   (point)))
+
+(defun apt-insert-asterisk ()
+  (interactive)
+  (insert "* "))
+
+(defun apt-insert-newline ()
+  (interactive)
+  (let ((current-line (line-up-to-point)))
+    (newline)
+    (cond ((string-match "^\\S-" current-line)
+           (newline-and-indent))
+          ((string-match "^\\s-+\\*" current-line)
+           (newline-and-indent)
+           (apt-insert-asterisk))
+          (t (indent-relative)))))
 
 
 (provide 'apt-mode)
