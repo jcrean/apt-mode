@@ -43,9 +43,16 @@
     (forward-word -1)
     (buffer-substring (point-at-bol) (point-at-eol))))
 
+(defun line-up-to-point ()
+  (buffer-substring
+   (line-beginning-position)
+   (point)))
+
 (defun calculate-apt-indent ()
-  (let ((prev-line (capture-previous-line)))
-    (cond ((string-match "[^*+ ]" prev-line) default-tab-width))))
+  (let ((prev-line (capture-previous-line))
+        (curr-line (line-up-to-point)))
+    (cond ((string-match "^[-+]" curr-line) 0)
+          ((string-match "[^*+ ]" prev-line) default-tab-width))))
 
 (defun apt-indent-line ()
   (interactive)
@@ -68,25 +75,42 @@
   (forward-line -6)
   (indent-for-tab-command))
 
-(defun line-up-to-point ()
-  (buffer-substring
-   (line-beginning-position)
-   (point)))
-
 (defun apt-insert-asterisk ()
   (interactive)
   (insert "* "))
 
+(defun apt-insert-verbatim-box (header &optional text)
+  (let ((full-header
+         (if (and
+              (string-match "^\\+" header)
+              (string-match "[^+]$" header))
+             (concat header "+")
+           header)))
+    (insert full-header)
+    (newline)
+    (insert text)
+    (save-excursion
+      (newline)
+      (insert full-header))))
+
 (defun apt-insert-newline ()
   (interactive)
-  (let ((current-line (line-up-to-point)))
+  (let ((current-line (buffer-substring (line-beginning-position) (line-end-position))))
     (newline)
     (cond ((string-match "^\\S-" current-line)
            (newline-and-indent))
           ((string-match "^\\s-+\\*" current-line)
            (newline-and-indent)
            (apt-insert-asterisk))
+          ((string-match "^\\s-*\\(\\+?-+\\)\\([^-]*?\\)\\(\\+?\\)$" current-line)
+           (let ((header (concat (match-string 1 current-line)
+                                 (match-string 3 current-line)))
+                 (text (match-string 2 current-line)))
+             (forward-line -1)
+             (kill-line 2)
+             (apt-insert-verbatim-box header text)))
           (t (indent-relative)))))
+
 
 
 (provide 'apt-mode)
