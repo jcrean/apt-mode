@@ -32,7 +32,28 @@
   (set (make-local-variable 'comment-start) "~~")
   (set (make-local-variable 'comment-start-skip) "~~+\\s*")
   (set (make-local-variable 'font-lock-defaults) '(apt-font-lock-keywords))
+  (set (make-local-variable 'indent-line-function) 'apt-indent-line)
+  (set (make-local-variable 'default-tab-width) 2)
   )
+
+(defun capture-previous-line ()
+  (interactive)
+  (save-excursion
+    (beginning-of-line)
+    (forward-word -1)
+    (buffer-substring (point-at-bol) (point-at-eol))))
+
+(defun calculate-apt-indent ()
+  (let ((prev-line (capture-previous-line)))
+    (cond ((string-match "[^*+ ]" prev-line) default-tab-width))))
+
+(defun apt-indent-line ()
+  (interactive)
+  (let ((indent (calculate-apt-indent)))
+    (if (> (current-column) (current-indentation))
+        (save-excursion
+          (indent-line-to indent))
+      (indent-line-to indent))))
 
 (defun insert-apt-header ()
   (interactive)
