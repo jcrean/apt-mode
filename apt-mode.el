@@ -17,6 +17,16 @@
     st)
   "Syntax table for 'apt-mode'.")
 
+(defvar verbatim-header-regexp
+  "^\\s-*\\(\\+?-+\\)\\([^-]*?\\)\\(\\+?\\)$"
+  "Regular expression that matches the start of a verbatim
+  section of text.")
+
+(defvar verbatim-header-bol-regexp
+  "^\\(\\+?-+\\)\\([^-]*?\\)\\(\\+?\\)$"
+  "Regular expression that matches the start of a verbatim
+  section of text at the beginning of a line.")
+
 ;;
 ;; Currently no font lock keywords, but can hook into this
 ;; later to do some syntax highlighting. 
@@ -93,11 +103,18 @@
       (newline)
       (insert full-header))))
 
+(defun editing-verbatim-p ()
+  (save-excursion
+    (condition-case nil
+        (search-backward-regexp verbatim-header-bol-regexp)
+      (error nil))))
+
 (defun apt-insert-newline ()
   (interactive)
   (let ((current-line (buffer-substring (line-beginning-position) (line-end-position))))
     (newline)
-    (cond ((string-match "^\\s-*\\(\\+?-+\\)\\([^-]*?\\)\\(\\+?\\)$" current-line)
+    (cond ((editing-verbatim-p) t)
+          ((string-match verbatim-header-regexp current-line)
            (let ((header (concat (match-string 1 current-line)
                                  (match-string 3 current-line)))
                  (text (match-string 2 current-line)))
