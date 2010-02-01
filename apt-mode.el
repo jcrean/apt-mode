@@ -87,7 +87,13 @@
 
 (defun apt-insert-asterisk ()
   (interactive)
-  (insert "* "))
+  (let ((line (buffer-substring 
+               (point-at-bol) (point-at-eol))))
+    (if (string-match "^\\*+" line)
+        (save-excursion
+          (beginning-of-line)
+          (insert "*"))
+      (insert "* "))))
 
 (defun apt-insert-verbatim-box (header &optional text)
   (let ((full-header
