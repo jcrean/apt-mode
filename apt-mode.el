@@ -104,10 +104,18 @@
       (insert full-header))))
 
 (defun editing-verbatim-p ()
+  (interactive)
+  (let ((count-before (% (count-matches verbatim-header-bol-regexp (point-min) (point)) 2))
+        (count-after (% (count-matches verbatim-header-bol-regexp (point) (point-max)) 2)))
+    (and
+     (not (zerop count-before))
+     (not (zerop count-after))
+     (= count-before count-after))))
+
+(defun end-of-verbatim-p ()
   (save-excursion
-    (condition-case nil
-        (search-backward-regexp verbatim-header-bol-regexp)
-      (error nil))))
+    (forward-line -1)
+    (editing-verbatim-p)))
 
 (defun apt-insert-newline ()
   (interactive)
@@ -119,15 +127,19 @@
                                  (match-string 3 current-line)))
                  (text (match-string 2 current-line)))
              (forward-line -1)
-             (kill-line 2)
-             (apt-insert-verbatim-box header text)))
+             (if (editing-verbatim-p)
+                 (progn
+                   (forward-line 1)
+                   (newline-and-indent))
+               (progn
+                 (kill-line 2)
+                 (apt-insert-verbatim-box header text)))))
           ((string-match "^\\S-" current-line)
            (newline-and-indent))
           ((string-match "^\\s-+\\*" current-line)
            (newline-and-indent)
            (apt-insert-asterisk))
           (t (indent-relative)))))
-
 
 
 (provide 'apt-mode)
